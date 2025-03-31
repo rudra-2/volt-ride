@@ -72,18 +72,3 @@ VoltRide is a smart and efficient ride management platform designed for electric
     - Visit: `http://localhost:5000`
 
 ---
-
-## 📧 Contact
-
-For queries or contributions, reach out to us:  
-- **Meet Shah** - [LinkedIn](https://linkedin.com/in/meet-shah-1110a72b2)
-- **Rudra Patel** - [LinkedIn](https://linkedin.com/in/rudra-patel-8b1700291)
-- **Jarnil Patel** - [LinkedIn](https://linkedin.com/in/jarnil-patel-7975ab347)
-
----
-
-## 🌿 Acknowledgments
-
-Special thanks to **Team Anirveda** and **PDEU OSAIL** for organizing **Breach 2025 - Economania Hackathon**.  
-
-**#Breach2025 #Anirveda #Economania #PDEU #OSAIL #Hackathon #FinTech #Finance #Tech**
