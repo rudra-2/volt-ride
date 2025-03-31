@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>Vehicle Details</title>
+    <style>
+        /* Body Background */
+        body {
+            background-color: #e3dfdf;
+            color: #000000;
+            padding-top: 80px;
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background-color: #ffffff;
+            border-radius: 30px;
+            padding: 10px 20px;
+            box-shadow: 0px 2px 10px rgba(0, 128, 0, 0.2);
+        }
+
+        .navbar-brand,
+        .navbar-nav .nav-link {
+            color: #000000 !important;
+            font-size: 16px;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #145c32 !important;
+        }
+
+        /* Buttons */
+        .btn-success {
+            background-color: #198754;
+            border-color: #198754;
+            color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .btn-success:hover {
+            background-color: #145c32;
+            border-color: #145c32;
+        }
+
+        .logout-button {
+            border-radius: 20px;
+            background-color: #198754;
+            color: white;
+            padding: 10px 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .logout-button:hover {
+            background-color: #145c32;
+            color: #ffffff;
+        }
+
+        /* Containers */
+        .container, .card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 2px 10px rgba(0, 128, 0, 0.1);
+        }
+
+        /* Table */
+        .table {
+            background-color: #ffffff;
+            color: #000000;
+            width: 100%;
+            min-width: 800px;
+        }
+
+        .table thead {
+            background-color: #198754;
+            color: #ffffff;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(25, 135, 84, 0.2);
+            color: #000000;
+        }
+
+        /* Table wrapper for horizontal scrolling */
+        .table-responsive-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Mobile-specific table styles */
+        @media (max-width: 768px) {
+            .table {
+                font-size: 0.9rem;
+            }
+
+            .table td, .table th {
+                padding: 0.5rem;
+                white-space: nowrap;
+            }
+
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.8rem;
+            }
+
+            /* Make search form responsive */
+            .d-flex {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .form-select {
+                width: 100% !important;
+                margin-right: 0 !important;
+            }
+
+            .btn-success {
+                width: 100%;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            .table {
+                font-size: 0.8rem;
+            }
+
+            .table td, .table th {
+                padding: 0.4rem;
+            }
+
+            .btn-sm {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Modal */
+        .modal-content {
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #198754;
+        }
+
+        .modal-header, .modal-footer {
+            border-color: #198754;
+        }
+
+        .btn-close {
+            color: #000000;
+        }
+
+        .btn-close:hover {
+            opacity: 0.8;
+        }
+
+        /* Navbar styles */
+        .navbar-toggler {
+            border: none;
+            padding: 0.5rem;
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: none;
+            outline: none;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 0.75)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        @media (max-width: 991px) {
+            .navbar-custom {
+                padding: 10px;
+            }
+
+            .navbar-collapse {
+                background-color: #ffffff;
+                padding: 15px;
+                border-radius: 10px;
+                margin-top: 10px;
+                box-shadow: 0px 2px 10px rgba(0, 128, 0, 0.1);
+            }
+
+            .navbar-nav {
+                margin-bottom: 15px;
+            }
+
+            .navbar-nav .nav-item {
+                margin: 5px 0;
+            }
+
+            .navbar-nav .nav-link {
+                padding: 8px 15px;
+                border-radius: 5px;
+                transition: background-color 0.3s;
+            }
+
+            .navbar-nav .nav-link:hover {
+                background-color: rgba(25, 135, 84, 0.1);
+            }
+
+            .btn-success {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .navbar-custom {
+                margin: 0 10px;
+                padding: 8px;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            .navbar-toggler {
+                padding: 0.4rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top mx-4 mt-2">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-bolt"></i> VoltRide</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/profile">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/wallet">Wallet</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact_user.html">Contact</a></li>
+                </ul>
+                <a href="/logout" class="btn btn-success">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Vehicle Details Section -->
+    <div class="container mt-5">
+        <h2 class="text-success"><i class="fas fa-car"></i> Vehicle Details</h2>
+
+        <!-- Search Form -->
+        <div class="d-flex my-3">
+            <select id="stationFilter" class="form-select me-3" style="width: 300px;">
+                <option value="">All Stations</option>
+                {% for station in stations %}
+                <option value="{{ station['station_id'] }}">{{ station['name'] }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn btn-success" onclick="filterVehicles()">Search</button>
+        </div>
+
+        <!-- Vehicle Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive-wrapper">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Vehicle ID</th>
+                                <th>Registration Plate</th>
+                                <th>Model</th>
+                                <th>Battery</th>
+                                <th>Station</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehicleTableBody">
+                            {% if vehicles %}
+                            {% for vehicle in vehicles %}
+                            <tr class="vehicle-row" data-station-id="{{ vehicle['station_id'] }}">
+                                <td>{{ vehicle['v_id'] }}</td>
+                                <td>{{ vehicle['reg_plate'] }}</td>
+                                <td>{{ vehicle['name'] }}</td>
+                                <td>{{ vehicle['battery'] }}%</td>
+                                <td>{{ vehicle['station_name'] }}</td>
+                                <td>{{ vehicle['status'] }}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm ride-now" data-bs-toggle="modal"
+                                        data-bs-target="#qrModal" data-vehicle-id="{{ vehicle['v_id'] }}">
+                                        Ride Now
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center">No vehicles found.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="qrModalLabel">Scan QR Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Please scan the QR code to proceed with your ride.</p>
+                    <input type="hidden" id="vehicleId" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="redirectToScanQR()">Scan QR</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store all vehicles for filtering
+        const allVehicles = document.querySelectorAll('.vehicle-row');
+        const vehicleTableBody = document.getElementById('vehicleTableBody');
+
+        function filterVehicles() {
+            const selectedStation = document.getElementById('stationFilter').value;
+            let hasVisibleVehicles = false;
+
+            // Remove any existing "no vehicles" message
+            const existingMessage = document.querySelector('.no-vehicles-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            // Show/hide vehicles based on selection
+            allVehicles.forEach(vehicle => {
+                const vehicleStationId = vehicle.getAttribute('data-station-id');
+                if (selectedStation === '' || vehicleStationId === selectedStation) {
+                    vehicle.style.display = '';
+                    hasVisibleVehicles = true;
+                } else {
+                    vehicle.style.display = 'none';
+                }
+            });
+
+            // Add "no vehicles" message if needed
+            if (!hasVisibleVehicles) {
+                const noVehiclesRow = document.createElement('tr');
+                noVehiclesRow.className = 'no-vehicles-message';
+                noVehiclesRow.innerHTML = '<td colspan="7" class="text-center">No vehicles found at this station.</td>';
+                vehicleTableBody.appendChild(noVehiclesRow);
+            }
+        }
+
+        // Add event listener for station filter change
+        document.getElementById('stationFilter').addEventListener('change', filterVehicles);
+
+        // Initialize ride-now buttons
+        document.querySelectorAll('.ride-now').forEach(button => {
+            button.addEventListener('click', function () {
+                const vehicleId = this.getAttribute('data-vehicle-id');
+                setVehicleId(vehicleId);
+            });
+        });
+
+        function setVehicleId(vehicleId) {
+            document.getElementById('vehicleId').value = vehicleId;
+        }
+
+        function redirectToScanQR() {
+            const vehicleId = document.getElementById('vehicleId').value;
+            window.location.href = `/scan_qr_live?vehicle_id=${vehicleId}`;
+        }
+    </script>
+
+</body>
+
+</html>

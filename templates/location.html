@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rental Ride Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        /* Base styles */
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+
+        /* Container for better mobile layout */
+        .container {
+            max-width: 100%;
+            padding: 10px;
+            margin: 0 auto;
+        }
+
+        /* Header styles */
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        /* Map container */
+        #map { 
+            height: 50vh; 
+            width: 100%;
+            margin-top: 10px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        /* Controls section */
+        #controls { 
+            display: flex; 
+            gap: 10px; 
+            margin: 10px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Button styles */
+        button { 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            cursor: pointer;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        #startBtn { 
+            background: #28a745; 
+            color: white; 
+        }
+
+        #endBtn { 
+            background: #dc3545; 
+            color: white; 
+        }
+
+        button:disabled { 
+            background: #cccccc; 
+            cursor: not-allowed; 
+        }
+
+        /* Status and info sections */
+        #status, #rideInfo { 
+            padding: 15px; 
+            background: white; 
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #rideInfo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        #rideInfo p {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        /* Violation styles */
+        .violation { 
+            background: #fff3cd; 
+            color: #856404; 
+            border-left: 4px solid #ffeeba; 
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        /* Geofence marker */
+        .geofence-marker { 
+            background: rgba(0, 0, 255, 0.2); 
+            border-radius: 50%; 
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+                margin-bottom: 10px;
+            }
+
+            #map {
+                height: 40vh;
+            }
+
+            #controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            button {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            #rideInfo {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            #rideInfo p {
+                font-size: 0.9rem;
+                padding: 6px;
+            }
+
+            #status {
+                font-size: 0.9rem;
+                padding: 10px;
+            }
+
+            .violation {
+                font-size: 0.9rem;
+                padding: 8px;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.1rem;
+            }
+
+            #map {
+                height: 35vh;
+            }
+
+            button {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            #rideInfo p {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rental Ride Management</h1>
+        
+        <div id="status">Initializing GPS...</div>
+        
+        <div id="controls">
+            <button id="startBtn" disabled>Start Ride</button>
+            <button id="endBtn" disabled>End Ride</button>
+        </div>
+        
+        <div id="rideInfo">
+            <p>Ride State: <span id="rideState">IDLE</span></p>
+            <p>Distance: <span id="distance">0.0</span> km</p>
+            <p>Estimated Fare: ₹<span id="fare">0</span></p>
+            <p>Current Location: <span id="currentLocation">Unknown</span></p>
+            <p>Near Parking: <span id="nearParking">No</span></p>
+        </div>
+        
+        <div id="map"></div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+    // Map and markers
+    let map = null;
+    let userMarker = null;
+    let parkingMarkers = [];
+    let watchId = null;
+    let currentPosition = null;
+    let routePolyline = null; // Polyline for the route
+    let routeCoordinates = []; // Array to store route coordinates
+    let rideId = '{{ ride_id }}'; // Store the ride ID from template
+
+    // Initialize map
+    function initMap() {
+        // Set up map centered on Ahmedabad
+        map = L.map('map').setView([23.0225, 72.5714], 12);
+
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add geofence boundary
+        const geofence = L.circle([23.0225, 72.5714], {
+            radius: 15000, // 15 km in meters
+            color: 'red',
+            fillColor: '#ff0000',
+            fillOpacity: 0.1,
+            weight: 2
+        }).addTo(map);
+
+        geofence.bindPopup('Service Area Boundary');
+
+        // Add parking stations
+        const parkingStations = JSON.parse('{{ stations | tojson | safe }}');
+        parkingStations.forEach(station => {
+            const marker = L.circle([station.latitude, station.longitude], {
+                radius: 100, // 50 meters
+                color: 'blue',
+                fillColor: '#1E90FF',
+                fillOpacity: 0.2,
+                className: 'geofence-marker'
+            }).addTo(map);
+
+            marker.bindPopup(`<b>${station.name}</b><br>Parking Station`);
+        });
+
+        // Initialize the route polyline
+        routePolyline = L.polyline([], {
+            color: 'red',
+            weight: 4,
+            opacity: 0.8
+        }).addTo(map);
+    }
+
+    // Start tracking position
+    function startTracking() {
+        if (watchId !== null) return;
+
+        const options = {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+        };
+
+        watchId = navigator.geolocation.watchPosition(
+            position => {
+                const { latitude, longitude, accuracy } = position.coords;
+                currentPosition = [latitude, longitude];
+
+                // Update status
+                document.getElementById('currentLocation').textContent =
+                    `${latitude.toFixed(6)}, ${longitude.toFixed(6)} (Accuracy: ${accuracy}m)`;
+
+                // Update map
+                updateMapPosition(latitude, longitude);
+
+                // Check if near parking station
+                checkParkingStation(latitude, longitude);
+
+                // Send to server
+                updateServerLocation(latitude, longitude);
+
+                // Update route
+                updateRoute(latitude, longitude);
+            },
+            error => {
+                let errorMessage = 'Error: ';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage += "Location access denied.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage += "Location unavailable.";
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage += "Location request timed out.";
+                        break;
+                    default:
+                        errorMessage += "Unknown error occurred.";
+                }
+                document.getElementById('status').textContent = errorMessage;
+            },
+            options
+        );
+
+        // Enable start button once we have position
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('status').textContent = "Tracking your position...";
+    }
+
+    // Update user position on map
+    function updateMapPosition(lat, lng) {
+        if (!userMarker) {
+            userMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'user-marker',
+                    html: '<div style="background: #ff0000; width: 20px; height: 20px; border-radius: 50%;"></div>',
+                    iconAnchor: [10, 10],
+                    iconSize: [20, 20]
+                })
+            }).addTo(map);
+        } else {
+            userMarker.setLatLng([lat, lng]);
+        }
+
+        // Center map on user
+        map.setView([lat, lng], 16);
+    }
+
+    // Update route polyline
+    function updateRoute(lat, lng) {
+        routeCoordinates.push([lat, lng]);
+        routePolyline.setLatLngs(routeCoordinates);
+    }
+
+    // Check if near parking station
+    function checkParkingStation(lat, lng) {
+        const parkingStations = JSON.parse('{{ stations | tojson | safe }}');
+        let isNearParking = false;
+        
+        // Check distance to each parking station
+        parkingStations.forEach(station => {
+            const distance = L.latLng(lat, lng).distanceTo([station.latitude, station.longitude]);
+            // If within 100 meters of a parking station
+            if (distance <= 100) {
+                isNearParking = true;
+            }
+        });
+        
+        // Update the UI
+        document.getElementById('nearParking').textContent = isNearParking ? 'Yes' : 'No';
+        
+        // Send location update to server
+        fetch('/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: 1, lat, lon: lng })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.alert) {
+                document.getElementById('status').innerHTML =
+                    `<div class="violation">${data.alert}</div>`;
+            }
+        });
+    }
+
+    // Update ride info display
+    function updateRideInfo(data) {
+        document.getElementById('distance').textContent = data.distance.toFixed(2);
+        document.getElementById('fare').textContent = data.total_fare.toFixed(2);
+        
+        if (data.violation) {
+            document.getElementById('status').innerHTML = 
+                `<div class="violation">${data.alert}<br>Violations: ${data.violation_count}</div>`;
+        } else if (data.penalty_applied) {
+            document.getElementById('status').innerHTML = 
+                `<div class="violation">${data.alert}</div>`;
+        } else if (data.violation_cleared) {
+            document.getElementById('status').innerHTML = 
+                `<div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px;">${data.alert}</div>`;
+        }
+    }
+
+    // Update server with current location
+    function updateServerLocation(lat, lng) {
+        fetch('/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: 1, lat, lon: lng })
+        })
+        .then(response => response.json())
+        .then(data => {
+            updateRideInfo(data);
+        });
+    }
+
+    // Start a new ride
+    function startRide() {
+        if (!currentPosition) return;
+        
+        fetch('/start_ride/' + rideId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                latitude: currentPosition[0], 
+                longitude: currentPosition[1] 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                document.getElementById('rideState').textContent = 'ACTIVE';
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('endBtn').disabled = false; // Enable end button
+                document.getElementById('status').textContent = data.message;
+            }
+        });
+    }
+
+    // End current ride
+    function endRide() {
+        if (!currentPosition) {
+            alert('Unable to get current position. Please try again.');
+            return;
+        }
+        
+        // Get the final ride data
+        const finalData = {
+            total_distance: parseFloat(document.getElementById('distance').textContent),
+            total_fare: parseFloat(document.getElementById('fare').textContent),
+            total_penalty: 0, // This will be calculated on the server
+            base_payment: parseFloat(document.getElementById('fare').textContent)
+        };
+        
+        // Disable the end button to prevent multiple clicks
+        document.getElementById('endBtn').disabled = true;
+        
+        fetch('/end_ride/' + rideId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                document.getElementById('endBtn').disabled = false;
+            } else {
+                document.getElementById('rideState').textContent = 'COMPLETED';
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('endBtn').disabled = true;
+                document.getElementById('status').textContent = data.message;
+                document.getElementById('fare').textContent = data.total_payment;
+                document.getElementById('distance').textContent = data.total_distance.toFixed(2);
+                
+                // Show completion message and redirect
+                alert(`Ride completed!\nDistance: ${data.total_distance.toFixed(2)} km\nFare: ₹${data.total_payment}`);
+                window.location.href = '/vehicle'; // Redirect to dashboard
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to end ride. Please try again.');
+            document.getElementById('endBtn').disabled = false;
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        initMap();
+        
+        // Set up button handlers
+        document.getElementById('startBtn').addEventListener('click', startRide);
+        document.getElementById('endBtn').addEventListener('click', endRide);
+        
+        // Start tracking position
+        if (navigator.geolocation) {
+            startTracking();
+        } else {
+            document.getElementById('status').textContent = 
+                "Geolocation is not supported by this browser.";
+        }
+    });
+    </script>
+</body>
+</html>

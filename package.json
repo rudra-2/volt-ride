@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "xking": "^1.0.3",
+    "zxing": "^0.1.2"
+  }
+}
