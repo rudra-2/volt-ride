@@ -2,10 +2,7 @@
 
 VoltRide is a smart and efficient ride management platform designed for electric vehicle (EV) rentals. With advanced geofencing technology and real-time tracking, it ensures secure and hassle-free rides for users while providing automated management for station masters.
 
-🚀 **Built by Team Infinity Nueral**  
-🏆 Developed at **HackNUthon**  
-👨‍💻 **Team Leader:** [Rudra Patel](https://github.com/rudra-2)  
-🤝 **Team Members:**   
+👨‍💻 Rudra Patel 
 - Nihanshu Bhanderi
 - Dhruvil Patel  
 - Jarnil Patel  
